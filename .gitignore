@@ -1,2 +1,4 @@
 nestang_usb/impl
 *.user
+.vscode
+verilator/obj_dir

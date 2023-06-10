@@ -1,20 +1,30 @@
 module usb_host(
     input sys_clk,
     input sys_resetn,
-    output [1:0] led
+    output [1:0] led,
+    output wire USB_DP,
+    output wire USB_DM
 );
+
+`define VERILATOR
 
 wire clk;
 reg [23:0] counter;
 
+`ifndef VERILATOR
 Gowin_rPLL pll (
     .clkout(clk),   // 48MHz clock for USB
     .clkin(sys_clk) // 27MHz clock
 );
+`endif
 
 usbh_host #(48000000) usb_host_inst (
 //     Inputs
+`ifndef VERILATOR
     .clk_i(clk),
+`else
+    .clk_i(sys_clk),
+`endif
     .rst_i(sys_resetn),
     .cfg_awvalid_i(cfg_awvalid_i),
     .cfg_awaddr_i(cfg_awaddr_i),
@@ -47,8 +57,8 @@ usbh_host #(48000000) usb_host_inst (
     .utmi_op_mode_o(utmi_op_mode_o),
     .utmi_xcvrselect_o(utmi_xcvrselect_o),
     .utmi_termselect_o(utmi_termselect_o),
-    .utmi_dppulldown_o(utmi_dppulldown_o),
-    .utmi_dmpulldown_o(utmi_dmpulldown_o)
+    .utmi_dppulldown_o(utmi_dppulldown_o), // need to be pulled down
+    .utmi_dmpulldown_o(utmi_dmpulldown_o)  // need to be pulled down
   );
 
 
@@ -58,5 +68,8 @@ end
 
 assign led[0] = counter[23];
 assign led[1] = sys_resetn;
+// Connect UTMI signals to FPGA pins
+assign dplus_pin = utmi_data_out_o;
+assign dminus_pin = utmi_data_in_i;
 
 endmodule
